@@ -33,4 +33,8 @@ export const getExposurePreview = () => api.get('/strategy/exposure-preview')
 export const getRisk = () => api.get('/risk')
 export const updateRisk = (config: object) => api.put('/risk', config)
 
+export const setMode = (mode: string, confirmationToken: string) =>
+  api.post('/trading/mode', { mode, confirmation_token: confirmationToken })
+export const getBasket = () => api.get('/trading/basket')
+
 export const getLogs = (params?: object) => api.get('/logs', { params })

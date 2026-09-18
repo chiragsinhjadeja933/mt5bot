@@ -35,6 +35,10 @@ class VirtualPosition:
     comment: str
     open_time: datetime
     basket_id: str = ""
+    price_current: Decimal = Decimal("0")
+    profit: Decimal = Decimal("0")
+    swap: Decimal = Decimal("0")
+    entry_commission: Decimal = Decimal("0")
 
     def direction(self) -> str:
         return "BUY" if self.type == 0 else "SELL"
@@ -47,6 +51,9 @@ class VirtualPosition:
             "direction": self.direction(),
             "volume": str(self.volume),
             "price_open": str(self.price_open),
+            "price_current": str(self.price_current or self.price_open),
+            "profit": str(self.profit),
+            "swap": str(self.swap),
             "sl": self.sl,
             "tp": self.tp,
             "magic": self.magic,
@@ -83,6 +90,22 @@ class DryRunGateway(TradingGateway):
             positions = [p for p in positions if p.symbol == symbol]
         if magic:
             positions = [p for p in positions if p.magic == magic]
+
+        for p in positions:
+            try:
+                tick = self._real.get_tick(p.symbol)
+                if tick:
+                    curr = Decimal(str(tick.bid if p.type == 0 else tick.ask))
+                    p.price_current = curr
+                    # Gold contract size is 100
+                    mult = Decimal("100")
+                    if p.type == 0:  # BUY
+                        p.profit = (curr - p.price_open) * p.volume * mult
+                    else:  # SELL
+                        p.profit = (p.price_open - curr) * p.volume * mult
+            except Exception:
+                pass
+
         return positions
 
     def send_order(self, request: OrderRequest) -> OrderResult:

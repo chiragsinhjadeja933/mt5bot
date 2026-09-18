@@ -114,8 +114,12 @@ async def _build_snapshot() -> dict:
             pass
 
         try:
-            positions = _gateway.get_positions()
+            from app.trading.engine import get_trading_engine
+            eng = get_trading_engine()
+            active_gw = eng.get_active_gateway() or _gateway
+            positions = active_gw.get_positions()
             snapshot["positions"] = [p.to_dict() for p in positions]
+            snapshot["basket"] = eng.get_basket_status()
         except Exception:
             pass
 
@@ -159,9 +163,14 @@ async def market_data_broadcaster(symbol: str, interval_s: float = 0.25) -> None
             if now - last_broadcast < interval_s:
                 continue
 
+            from app.trading.engine import get_trading_engine
+            eng = get_trading_engine()
+            active_gw = eng.get_active_gateway() or gw
+
             tick = gw.get_tick(symbol)
             account = gw.get_account()
-            positions = gw.get_positions()
+            positions = active_gw.get_positions()
+            basket = eng.get_basket_status()
 
             await broadcast({
                 "type": "market_update",
@@ -169,6 +178,7 @@ async def market_data_broadcaster(symbol: str, interval_s: float = 0.25) -> None
                 "tick": tick.to_dict() if tick else None,
                 "account": account.to_dict() if account else None,
                 "positions": [p.to_dict() for p in positions],
+                "basket": basket,
                 "state": _system_state.to_dict(),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             })

@@ -41,6 +41,8 @@ async def connect_mt5() -> ConnectResponse:
             if _system_state.connection_state != ConnectionState.CONNECTED:
                 _system_state.transition_connection(ConnectionState.CONNECTED, "connected")
             start_broadcaster(settings.gold_symbol)
+            from app.trading.engine import start_trading_engine
+            start_trading_engine()
             return ConnectResponse(
                 status="ALREADY_CONNECTED",
                 login=info.login,
@@ -75,6 +77,8 @@ async def connect_mt5() -> ConnectResponse:
 
         _system_state.transition_connection(ConnectionState.CONNECTED, "connected")
         start_broadcaster(settings.gold_symbol)
+        from app.trading.engine import start_trading_engine
+        start_trading_engine()
 
         return ConnectResponse(
             status="CONNECTED",

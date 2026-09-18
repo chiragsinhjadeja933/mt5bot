@@ -23,6 +23,24 @@ export interface Position {
   profit: string; swap: string; magic: number; comment: string;
 }
 
+export interface BasketState {
+  basket_id?: string;
+  symbol?: string;
+  direction?: string;
+  position_count?: number;
+  max_positions?: number;
+  total_volume?: string;
+  weighted_avg_price?: string;
+  last_entry_price?: string;
+  floating_pnl?: string;
+  basket_tp?: string;
+  basket_sl?: string;
+  progress_pct?: number;
+  waiting_for_first_entry?: boolean;
+  closing_basket?: boolean;
+  execution_mode?: string;
+}
+
 interface AppStore {
   connected: boolean
   wsStatus: 'connecting' | 'live' | 'reconnecting' | 'stale'
@@ -30,6 +48,7 @@ interface AppStore {
   account: AccountState | null
   tick: TickState | null
   positions: Position[]
+  basket: BasketState | null
   alerts: { id: number; msg: string; level: string }[]
   setConnected: (v: boolean) => void
   setWsStatus: (s: AppStore['wsStatus']) => void
@@ -37,6 +56,7 @@ interface AppStore {
   setAccount: (a: AccountState) => void
   setTick: (t: TickState) => void
   setPositions: (p: Position[]) => void
+  setBasket: (b: BasketState) => void
   addAlert: (msg: string, level?: string) => void
   dismissAlert: (id: number) => void
 }
@@ -51,6 +71,7 @@ export const useStore = create<AppStore>((set) => ({
   account: null,
   tick: null,
   positions: [],
+  basket: null,
   alerts: [],
 
   setConnected: (v) => set({ connected: v }),
@@ -59,6 +80,7 @@ export const useStore = create<AppStore>((set) => ({
   setAccount: (a) => set({ account: a }),
   setTick: (t) => set({ tick: t }),
   setPositions: (p) => set({ positions: p }),
+  setBasket: (b) => set({ basket: b }),
   addAlert: (msg, level = 'info') =>
     set((s) => ({ alerts: [...s.alerts, { id: ++alertId, msg, level }].slice(-20) })),
   dismissAlert: (id) =>

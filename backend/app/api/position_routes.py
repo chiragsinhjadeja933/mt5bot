@@ -14,27 +14,32 @@ class ModifyRequest(BaseModel):
 
 @router.get("/positions")
 async def get_positions() -> list:
+    from app.trading.engine import get_trading_engine
     from app.api.mt5_routes import _gateway
-    if not _gateway:
+    eng = get_trading_engine()
+    gw = eng.get_active_gateway() or _gateway
+    if not gw:
         raise HTTPException(503, "MT5 not connected")
-    positions = _gateway.get_positions()
+    positions = gw.get_positions()
     return [p.to_dict() for p in positions]
 
 
 @router.post("/positions/{ticket}/close")
 async def close_position(ticket: int) -> dict:
+    from app.trading.engine import get_trading_engine
     from app.api.mt5_routes import _gateway
-    if not _gateway:
+    eng = get_trading_engine()
+    gw = eng.get_active_gateway() or _gateway
+    if not gw:
         raise HTTPException(503, "MT5 not connected")
-    positions = _gateway.get_positions()
+    positions = gw.get_positions()
     pos = next((p for p in positions if p.ticket == ticket), None)
     if pos is None:
         raise HTTPException(404, f"Position {ticket} not found")
 
     # Close: opposite direction
     close_type = 1 if pos.type == 0 else 0  # BUY→SELL, SELL→BUY
-    from app.mt5.market_data import read_tick
-    tick = _gateway.get_tick(pos.symbol)
+    tick = gw.get_tick(pos.symbol)
     price = float(tick.bid) if close_type == 1 else float(tick.ask)
 
     result = _gateway.close_position(

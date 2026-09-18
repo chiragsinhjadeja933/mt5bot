@@ -1,13 +1,14 @@
 import { useStore } from '../store/useStore'
-
-import { startBot, emergencyStop, pauseBot, stopBot } from '../services/api'
-import { Activity, TrendingUp, AlertTriangle } from 'lucide-react'
+import { startBot, emergencyStop, pauseBot, stopBot, setMode } from '../services/api'
+import { Activity, TrendingUp, AlertTriangle, Layers, Zap } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Dashboard() {
-  const { account, tick, positions, systemState } = useStore()
+  const { account, tick, positions, basket, systemState, setSystemState } = useStore()
   const [startToken, setStartToken] = useState('')
   const [showStart, setShowStart] = useState(false)
+  const [showModeSwitch, setShowModeSwitch] = useState(false)
+  const [modeConfirmToken, setModeConfirmToken] = useState('')
 
   const pnlNum = Number(account?.profit || 0)
   const equity = Number(account?.equity || 0)
@@ -19,6 +20,7 @@ export default function Dashboard() {
   const isRunning = botState === 'RUNNING'
   const isPaused = botState === 'PAUSED'
   const isEmergency = botState === 'EMERGENCY_STOP'
+  const isDryRun = systemState.execution_mode === 'DRY_RUN'
 
   const handleStart = async () => {
     if (startToken.trim().toUpperCase() !== 'START DEMO') {
@@ -31,6 +33,24 @@ export default function Dashboard() {
       setStartToken('')
     } catch (e: any) {
       alert('Start failed: ' + (e.response?.data?.detail || e.message))
+    }
+  }
+
+  const handleToggleMode = async () => {
+    const targetMode = isDryRun ? 'DEMO_EXECUTION' : 'DRY_RUN'
+    if (targetMode === 'DEMO_EXECUTION') {
+      if (modeConfirmToken.trim().toUpperCase() !== 'DEMO EXECUTION') {
+        alert("Type exactly 'DEMO EXECUTION' to confirm live demo orders")
+        return
+      }
+    }
+    try {
+      const res = await setMode(targetMode, targetMode === 'DEMO_EXECUTION' ? 'DEMO EXECUTION' : '')
+      if (res.data?.state) setSystemState(res.data.state)
+      setShowModeSwitch(false)
+      setModeConfirmToken('')
+    } catch (e: any) {
+      alert('Mode switch failed: ' + (e.response?.data?.detail || e.message))
     }
   }
 
@@ -201,10 +221,61 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <div className="stat-label">Mode</div>
-                <span className={`badge ${systemState.execution_mode === 'DRY_RUN' ? 'badge-yellow' : 'badge-blue'}`}>
-                  {systemState.execution_mode}
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div className="stat-label">Execution Mode</div>
+                    <span className={`badge ${systemState.execution_mode === 'DRY_RUN' ? 'badge-yellow' : 'badge-blue'}`}>
+                      {systemState.execution_mode}
+                    </span>
+                  </div>
+                  {!showModeSwitch && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ fontSize: 10, borderColor: isDryRun ? 'var(--accent)' : 'var(--yellow)' }}
+                      onClick={() => setShowModeSwitch(true)}
+                    >
+                      {isDryRun ? '⚡ Switch to DEMO' : 'Switch to DRY RUN'}
+                    </button>
+                  )}
+                </div>
+
+                {showModeSwitch && (
+                  <div style={{ marginTop: 6, padding: 8, background: 'var(--bg-tertiary)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {isDryRun ? (
+                      <>
+                        <div style={{ fontSize: 10, color: 'var(--yellow)' }}>
+                          Type <strong>DEMO EXECUTION</strong> to send real orders to MT5 Demo:
+                        </div>
+                        <input
+                          value={modeConfirmToken}
+                          onChange={e => setModeConfirmToken(e.target.value)}
+                          placeholder="DEMO EXECUTION"
+                          style={{ fontSize: 11 }}
+                        />
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-primary btn-sm" style={{ fontSize: 10, flex: 1 }} onClick={handleToggleMode}>
+                            Confirm DEMO
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize: 10 }} onClick={() => setShowModeSwitch(false)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 10 }}>Switch back to simulated DRY RUN mode?</div>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-warning btn-sm" style={{ fontSize: 10, flex: 1 }} onClick={handleToggleMode}>
+                            Confirm DRY RUN
+                          </button>
+                          <button className="btn btn-ghost btn-sm" style={{ fontSize: 10 }} onClick={() => setShowModeSwitch(false)}>
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -217,7 +288,7 @@ export default function Dashboard() {
                 <div className={`mono ${pnlNum >= 0 ? 'profit' : 'loss'}`} style={{ fontSize: 16, fontWeight: 700 }}>
                   {pnlNum >= 0 ? '+' : ''}{pnlNum.toFixed(2)} {currency}
                 </div>
-                <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Provenance: MT5</div>
+                <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>Provenance: {isDryRun ? 'DRY RUN' : 'MT5'}</div>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
@@ -258,6 +329,72 @@ export default function Dashboard() {
                   onClick={() => { if (confirm('EMERGENCY STOP?')) emergencyStop() }}>
                   <AlertTriangle size={14} /> EMERGENCY STOP
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Basket Card */}
+          <div className="card">
+            <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Layers size={12} /> Active Basket</span>
+              <span className="badge badge-blue" style={{ fontSize: 10 }}>ID: {basket?.basket_id || '—'}</span>
+            </div>
+            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                <div>
+                  <div className="stat-label">Direction</div>
+                  <span className={`badge ${basket?.direction === 'BUY' ? 'badge-green' : 'badge-red'}`}>
+                    {basket?.direction || 'BUY'}
+                  </span>
+                </div>
+                <div>
+                  <div className="stat-label">Positions</div>
+                  <div style={{ fontWeight: 700 }}>{basket?.position_count || positions.length} / {basket?.max_positions || 40}</div>
+                </div>
+                <div>
+                  <div className="stat-label">Basket Vol</div>
+                  <div className="mono">{basket?.total_volume || '0.00'} lots</div>
+                </div>
+                <div>
+                  <div className="stat-label">Avg Entry</div>
+                  <div className="mono">{basket?.weighted_avg_price ? Number(basket.weighted_avg_price).toFixed(2) : '—'}</div>
+                </div>
+              </div>
+
+              {/* Floating Basket P/L & TP Progress */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span className="stat-label">Basket P/L</span>
+                  <span className={`mono ${Number(basket?.floating_pnl || 0) >= 0 ? 'profit' : 'loss'}`} style={{ fontWeight: 700, fontSize: 15 }}>
+                    {Number(basket?.floating_pnl || 0) >= 0 ? '+' : ''}${Number(basket?.floating_pnl || 0).toFixed(2)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 4 }}>
+                  <span>Take Profit Target:</span>
+                  <span className="profit" style={{ fontWeight: 700 }}>+${Number(basket?.basket_tp || 3.0).toFixed(2)}</span>
+                </div>
+
+                {/* Progress Bar */}
+                <div style={{ background: 'var(--bg-tertiary)', borderRadius: 4, height: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                  <div
+                    style={{
+                      height: '100%',
+                      width: `${Math.min(100, Math.max(0, basket?.progress_pct || 0))}%`,
+                      background: Number(basket?.floating_pnl || 0) >= Number(basket?.basket_tp || 3.0) ? 'var(--green)' : 'var(--accent)',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                  <span>0%</span>
+                  <span>{basket?.progress_pct || 0}% towards TP</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Zap size={10} style={{ color: 'var(--green)' }} />
+                <span>Auto-Rearm: <strong>ACTIVE</strong> (instant next cycle)</span>
               </div>
             </div>
           </div>

@@ -8,7 +8,7 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null)
   const retryRef = useRef(0)
   const mountedRef = useRef(true)
-  const { setWsStatus, setSystemState, setAccount, setTick, setPositions, addAlert } = useStore()
+  const { setWsStatus, setSystemState, setAccount, setTick, setPositions, setBasket, addAlert } = useStore()
 
   useEffect(() => {
     mountedRef.current = true
@@ -31,6 +31,7 @@ export function useWebSocket() {
           if (msg.account) setAccount(msg.account)
           if (msg.tick) setTick(msg.tick)
           if (msg.positions) setPositions(msg.positions)
+          if (msg.basket) setBasket(msg.basket)
           if (msg.type === 'alert') addAlert(msg.message, msg.level)
         } catch { /* ignore */ }
       }

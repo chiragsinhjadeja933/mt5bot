@@ -99,18 +99,21 @@ async def emergency_stop() -> dict:
 @router.post("/close-all")
 async def close_all_positions() -> dict:
     """Close all bot-owned positions. Section 14 [ADD]."""
+    from app.trading.engine import get_trading_engine
     from app.api.mt5_routes import _gateway
-    if not _gateway:
+    eng = get_trading_engine()
+    gw = eng.get_active_gateway() or _gateway
+    if not gw:
         raise HTTPException(503, "MT5 not connected")
 
-    positions = _gateway.get_positions()
+    positions = gw.get_positions()
     results = []
     for pos in positions:
         try:
             close_type = 1 if pos.type == 0 else 0
-            tick = _gateway.get_tick(pos.symbol)
+            tick = gw.get_tick(pos.symbol)
             price = float(tick.bid) if close_type == 1 else float(tick.ask)
-            result = _gateway.close_position(
+            result = gw.close_position(
                 ticket=pos.ticket,
                 symbol=pos.symbol,
                 volume=pos.volume,
@@ -168,3 +171,12 @@ async def reset_emergency(req: ResetRequest) -> dict:
 
     _system_state.transition_bot(BotState.READY, "manual_reset_confirmed")
     return {"status": "reset", "state": _system_state.to_dict()}
+
+
+@router.get("/basket")
+async def get_basket() -> dict:
+    """Get current active basket status and statistics."""
+    from app.trading.engine import get_trading_engine
+    engine = get_trading_engine()
+    return engine.get_basket_status()
+
