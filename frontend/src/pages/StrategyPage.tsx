@@ -21,7 +21,70 @@ export default function StrategyPage() {
       {/* Config form */}
       <div style={{ flex: 1 }}>
         <div className="card">
-          <div className="card-header"><AlertTriangle size={12} /> Grid Strategy Config</div>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span><AlertTriangle size={12} /> Grid Strategy Config</span>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: 10, borderColor: 'var(--green)', color: 'var(--green)' }}
+                onClick={() => setCfg({
+                  ...cfg,
+                  strategy_id: 'xauusd_fast_grid',
+                  symbol: 'XAUUSD',
+                  direction: cfg.direction || 'BUY',
+                  grid_mode: 'adverse',
+                  grid_anchor: 'last_entry',
+                  first_entry: 'immediate_on_start',
+                  initial_lot: 0.01,
+                  lot_mode: 'fixed',
+                  lot_multiplier: 1.0,
+                  allow_multiplier: false,
+                  max_lot: 0.05,
+                  max_total_lots: 0.50,
+                  max_positions: 40,
+                  grid_distance_points: 40,
+                  basket_take_profit: 3.0,
+                  basket_stop_loss: 50.0,
+                  cooldown_seconds: 0,
+                  rearm_after_basket_close: true,
+                  rearm_delay_seconds: 5,
+                  aggressive_mode: true,
+                })}
+              >
+                ⚡ Load Fast Scalp Grid (Video-Style)
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: 10 }}
+                onClick={() => setCfg({
+                  ...cfg,
+                  strategy_id: 'xauusd_conservative',
+                  symbol: 'XAUUSD',
+                  direction: cfg.direction || 'BUY',
+                  grid_mode: 'adverse',
+                  grid_anchor: 'last_entry',
+                  first_entry: 'manual_trigger',
+                  initial_lot: 0.01,
+                  lot_mode: 'fixed',
+                  lot_multiplier: 1.0,
+                  allow_multiplier: false,
+                  max_lot: 0.05,
+                  max_total_lots: 0.20,
+                  max_positions: 10,
+                  grid_distance_points: 100,
+                  basket_take_profit: 10.0,
+                  basket_stop_loss: 30.0,
+                  cooldown_seconds: 30,
+                  rearm_after_basket_close: false,
+                  aggressive_mode: false,
+                })}
+              >
+                🛡 Conservative
+              </button>
+            </div>
+          </div>
           <div className="card-body" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
             {/* --- Section: Identity --- */}
