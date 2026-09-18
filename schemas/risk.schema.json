@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RiskConfiguration",
+  "description": "Validation schema for Risk Limits and Safety Controls (Section 13, 19)",
+  "type": "object",
+  "required": [
+    "demo_only_enforced",
+    "absolute_max_lot",
+    "max_daily_loss_currency",
+    "max_total_drawdown_percent",
+    "max_spread_points",
+    "stale_data_timeout_seconds",
+    "require_hedging_account"
+  ],
+  "properties": {
+    "demo_only_enforced": {
+      "type": "boolean",
+      "const": true,
+      "description": "Must be true in Version 1. Prevents live account trading."
+    },
+    "require_hedging_account": {
+      "type": "boolean",
+      "default": true
+    },
+    "absolute_max_lot": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 5.0,
+      "default": 1.0
+    },
+    "max_daily_loss_currency": {
+      "type": "number",
+      "minimum": 1.0,
+      "default": 500.0
+    },
+    "max_total_drawdown_percent": {
+      "type": "number",
+      "minimum": 1.0,
+      "maximum": 90.0,
+      "default": 20.0
+    },
+    "max_spread_points": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 500,
+      "default": 60
+    },
+    "stale_data_timeout_seconds": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 60.0,
+      "default": 5.0
+    },
+    "max_order_retries": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5,
+      "default": 2
+    },
+    "retry_backoff_base_ms": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 5000,
+      "default": 500
+    },
+    "stop_on_first_error": {
+      "type": "boolean",
+      "default": true
+    },
+    "emergency_stop_persisted": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,37 @@
+# ==============================================================================
+# MT5 DEMO TRADING TERMINAL — SUPPORTING INFRASTRUCTURE ONLY
+# Section 0.2, 35 [ADD]
+#
+# IMPORTANT PLATFORM REALITY:
+# The MetaTrader5 Python package ONLY runs natively on Windows and communicates
+# with terminal64.exe running under the same user session on Windows.
+# It CANNOT run inside a Linux Docker container.
+#
+# This docker-compose file is solely for optional supporting infrastructure
+# such as a PostgreSQL database or a static frontend container.
+# The trading engine backend itself MUST run natively on Windows.
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mt5_terminal_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mt5user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mt5securepass}
+      POSTGRES_DB: ${POSTGRES_DB:-mt5terminal}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mt5user -d mt5terminal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:

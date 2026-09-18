@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StrategyConfiguration",
+  "description": "Validation schema for XAUUSD grid & trading strategies (Sections 10, 22)",
+  "type": "object",
+  "required": [
+    "strategy_id",
+    "name",
+    "symbol",
+    "direction",
+    "grid_mode",
+    "grid_anchor",
+    "first_entry",
+    "initial_lot",
+    "lot_mode",
+    "grid_step_points",
+    "max_positions"
+  ],
+  "properties": {
+    "strategy_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "symbol": {
+      "type": "string",
+      "default": "XAUUSD"
+    },
+    "direction": {
+      "type": "integer",
+      "enum": [0, 1],
+      "description": "0 = BUY, 1 = SELL"
+    },
+    "grid_mode": {
+      "type": "string",
+      "enum": ["adverse", "favorable"],
+      "description": "adverse = averaging down/martingale; favorable = pyramid"
+    },
+    "grid_anchor": {
+      "type": "string",
+      "enum": ["last_entry", "average_entry"]
+    },
+    "first_entry": {
+      "type": "string",
+      "enum": ["immediate_on_start", "manual_trigger", "signal"]
+    },
+    "initial_lot": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 5.0
+    },
+    "lot_mode": {
+      "type": "string",
+      "enum": ["fixed", "multiplier", "custom"]
+    },
+    "lot_multiplier": {
+      "type": "number",
+      "minimum": 1.0,
+      "maximum": 3.0,
+      "default": 1.0
+    },
+    "custom_lots": {
+      "type": "array",
+      "items": { "type": "number", "minimum": 0.01 },
+      "default": []
+    },
+    "grid_step_mode": {
+      "type": "string",
+      "enum": ["fixed", "dynamic_atr", "custom"],
+      "default": "fixed"
+    },
+    "grid_step_points": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 10000
+    },
+    "custom_steps_points": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 10 },
+      "default": []
+    },
+    "max_positions": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "basket_tp_mode": {
+      "type": "string",
+      "enum": ["currency", "points", "percent_balance"],
+      "default": "currency"
+    },
+    "basket_tp_value": {
+      "type": "number",
+      "minimum": 0.0,
+      "default": 10.0
+    },
+    "basket_sl_mode": {
+      "type": "string",
+      "enum": ["none", "currency", "points", "percent_balance"],
+      "default": "none"
+    },
+    "basket_sl_value": {
+      "type": "number",
+      "minimum": 0.0,
+      "default": 0.0
+    },
+    "trailing_tp_enabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "trailing_tp_activation": {
+      "type": "number",
+      "default": 0.0
+    },
+    "trailing_tp_distance": {
+      "type": "number",
+      "default": 0.0
+    },
+    "partial_tp_levels": {
+      "type": "array",
+      "default": []
+    },
+    "magic_number": {
+      "type": "integer",
+      "default": 100100
+    },
+    "order_comment_prefix": {
+      "type": "string",
+      "default": "GridBot"
+    },
+    "protective_sl_points": {
+      "type": "integer",
+      "default": 0,
+      "description": "Broker-side disaster SL per leg (Section 50)"
+    }
+  },
+  "additionalProperties": false
+}
