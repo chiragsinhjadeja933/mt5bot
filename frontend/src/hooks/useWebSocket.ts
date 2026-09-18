@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 
-const WS_URL = `ws://127.0.0.1:8000/ws?token=${import.meta.env.VITE_API_TOKEN || 'dev'}`
+const WS_URL = import.meta.env.VITE_WS_URL || `ws://127.0.0.1:8000/ws?token=${import.meta.env.VITE_API_TOKEN || 'dev'}`
 const RECONNECT_MS = [1000, 2000, 4000, 8000, 15000]
 
 export function useWebSocket() {
